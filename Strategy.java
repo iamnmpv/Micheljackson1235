@@ -116,13 +116,13 @@ class Strategy {
     }
 
     private static int is_mohafez(Cor Player_Cor, Cor Ball_Cor, Game game) {
-        if (Player_Cor.y > 1.6 || Player_Cor.y < -1.6)
+        if (Player_Cor.y > 1.4 || Player_Cor.y < -1.4)
             return 0;
         int tedad = 0;
         for (int i = 0; i < 5; i++) {
             double px = game.getMyTeam().getPlayer(i).getPosition().getX();
             double py = game.getMyTeam().getPlayer(i).getPosition().getY();
-            if (py <= 1.6 && py >= -1.6 && Distance(px,py,-7,0) <= 3 && px<Ball_Cor.x)
+            if (py <= 1.4 && py >= -1.4 && Distance(px,py,-7,0) <= 3 && px < Ball_Cor.x)
                 tedad++;
         }
         if (tedad < 3)
@@ -142,7 +142,7 @@ class Strategy {
             double P_x = game.getMyTeam().getPlayer(i).getPosition().getX();
             double P_y = game.getMyTeam().getPlayer(i).getPosition().getY();
             if (ball) {
-                if (dotline(P_x, P_y, A.x, A.y, B.x, B.y) <= 0.75) {
+                if (dotline(P_x, P_y, A.x, A.y, B.x, B.y) < 0.75) {
 
                     if (Distance(A.x, A.y, B.x, B.y) >= Math.max(Distance(A.x, A.y, P_x, P_y), Distance(B.x, B.y, P_x, P_y))) {
                         annoys++;
@@ -150,7 +150,7 @@ class Strategy {
                     }
                 }
             } else {
-                if (dotline(P_x, P_y, A.x, A.y, B.x, B.y) <= 1) {
+                if (dotline(P_x, P_y, A.x, A.y, B.x, B.y) < 1) {
                     if (Distance(A.x, A.y, B.x, B.y) >= Math.max(Distance(A.x, A.y, P_x, P_y), Distance(B.x, B.y, P_x, P_y))) {
                         annoys += 1.1 - (Math.abs(0.5 - dotline(P_x, P_y, A.x, A.y, B.x, B.y)) * 2);
                     }
@@ -215,7 +215,6 @@ class Strategy {
             score -= find_annoy(Ball_Cor, Gate_Cor, true, Player_id, game) * 4;
             option.annoys = (find_annoy(Player_Cor, find_tok(Ball_Cor, Gate_Cor, true), false, Player_id, game) +
                     find_annoy(Ball_Cor, Gate_Cor, true, Player_id, game));
-//            System.out.println("O_o: " + Gate_Cor.y);
             int tafazol_angle = Math.abs(find_angle(Player_Cor, Ball_Cor) - find_angle(Ball_Cor, Gate_Cor));
             if (tafazol_angle > 180)
                 tafazol_angle = 360 - tafazol_angle;
@@ -294,8 +293,8 @@ class Strategy {
 
     private static PriorityQueue<Option> Formula(Cor Player_Cor, Cor Ball_Cor, int player_id, Game game) {
         PriorityQueue<Option> priorityQueue = new PriorityQueue<>();
-        for (int j =0; j < 24; j++) {
-            Cor Gate_Cor = new Cor(7, -1.15 + (j * 0.1));
+        for (int j =0; j < 47; j++) {
+            Cor Gate_Cor = new Cor(7, -1.15 + (j * 0.05));
             for (int i = 0; i < 4; i++) {
 
                 if (i == 0) {
@@ -304,6 +303,8 @@ class Strategy {
                     Option option = new Option(angle, player_id);
                     option.score = get_Score(Player_Cor, Ball_Cor, Gate_Cor, 0, player_id, game, option);
                     option.des = Gate_Cor;
+                    if(option.score<-13)
+                        option.angle=find_angle(Player_Cor, Ball_Cor);
                     priorityQueue.add(option);
                 } else if (i == 1) {
                     // Player shoots himself to wall
@@ -314,6 +315,11 @@ class Strategy {
                     option.score = get_Score(Player_Cor, Ball_Cor, Gate_Cor, 1, player_id, game, option);
                     if(player_shadow.y<-3.5 || player_shadow.y >3.5)
                         option.score-=100;
+                    if(option.score<-13)
+                    {
+                        player_shadow = find_Shadow_for_Player(Player_Cor, Ball_Cor);
+                        option.angle=find_angle(Player_Cor, player_shadow);
+                    }
                     option.des = player_shadow;
                     priorityQueue.add(option);
 
@@ -323,15 +329,20 @@ class Strategy {
                     int angle = find_angle(Player_Cor, find_tok(Ball_Cor, ball_shadow, true));
                     Option option = new Option(angle, player_id);
                     option.score = get_Score(Player_Cor, Ball_Cor, Gate_Cor, 2, player_id, game, option);
+                    if(option.score<-13)
+                    {
+                        option.angle=find_angle(Player_Cor, Ball_Cor);;
+                    }
                     option.des = ball_shadow;
                     priorityQueue.add(option);
                 }else if(i==3)
                 {
+                    // Shoot with a Good boy!
                     for(int k=0;k<5;k++)
                     {
                         if(k==i)
                             continue;
-                        Cor Good_Player=new Cor(game.getMyTeam().getPlayer(i).getPosition().getX(),game.getMyTeam().getPlayer(i).getPosition().getY());
+                        Cor Good_Player=new Cor(game.getOppTeam().getPlayer(i).getPosition().getX(),game.getOppTeam().getPlayer(i).getPosition().getY());
                         
                         if(find_annoy(Player_Cor, Good_Player, false, player_id, game)==0)
                         {
@@ -339,23 +350,17 @@ class Strategy {
                             int angle= find_angle(Good_Player,Maghsad);
                             Option option = new Option(angle, player_id);
                             option.score = get_Score(Good_Player, Ball_Cor, Gate_Cor, 0, player_id, game, option);
+                            option.des = Maghsad;
                             int tafazol_angle = Math.abs(find_angle(Ball_Cor,Good_Player) - find_angle(Good_Player, find_tok(Ball_Cor,Gate_Cor,true)));
                             if (tafazol_angle > 180)
                                 tafazol_angle = 360 - tafazol_angle;
                             option.angle_diff = tafazol_angle;
-                            option.score += 10 - (tafazol_angle / 9);
+                            option.score -= (tafazol_angle / 9)+1;
                             priorityQueue.add(option);
                         }
                     }
                 }
-                else if (Distance(Ball_Cor.x,Ball_Cor.y,Gate_Cor.x,Gate_Cor.y)>5){
-                    // direct shoot without tok
-                    int angle2 = find_angle(Player_Cor, Ball_Cor);
-                    Option option2 = new Option(angle2, player_id);
-                    option2.score = get_Score(Player_Cor, Ball_Cor, Gate_Cor, 3, player_id, game, option2);
-                    option2.des = Gate_Cor;
-                    priorityQueue.add(option2);
-                }
+                
             }
         }
         return priorityQueue;
@@ -388,20 +393,14 @@ class Strategy {
                 priorityQueue.add(tempo.poll());
             }
         }
-        System.out.println("Ball x:"+game.getBall().getPosition().getX()+",y:"+game.getBall().getPosition().getY());
-        for (Option option : priorityQueue) {
-            Position position = game.getMyTeam().getPlayer(option.player_id).getPosition();
-            System.out.println("id:"+option.player_id + ",x:"+position.getX()+",y:"+position.getY()+",score:" + option.score + ",angle:" + option.angle + ",distance:"
-                    + option.distance + ",annoys:" + option.annoys +
-                    ",des cor.x:" + option.des.x + ",des.cor.y:" + option.des.y+",angle_diff:"+option.angle_diff);
-        }
-//        Option[] arrayList  = (Option[]) priorityQueue.toArray();
-//        Arrays.sort(arrayList);
-//        for (Option option : arrayList) {
-//            System.out.println("In array:"+option.player_id + ",score:" + option.score + ",angle:" + option.angle + ",distance:"
+//        System.out.println("Ball x:"+game.getBall().getPosition().getX()+",y:"+game.getBall().getPosition().getY());
+//        for (Option option : priorityQueue) {
+//            Position position = game.getMyTeam().getPlayer(option.player_id).getPosition();
+//            System.out.println("id:"+option.player_id + ",x:"+position.getX()+",y:"+position.getY()+",score:" + option.score + ",angle:" + option.angle + ",distance:"
 //                    + option.distance + ",annoys:" + option.annoys +
 //                    ",des cor.x:" + option.des.x + ",des.cor.y:" + option.des.y+",angle_diff:"+option.angle_diff);
 //        }
+
 
         Option best_option = priorityQueue.poll();
         if (best_option != null && best_option.score < -15){
@@ -411,8 +410,8 @@ class Strategy {
             for (int i = 0; i < 5; i++) {
                 Cor Player_Cor = new Cor(game.getMyTeam().getPlayer(i).getPosition().getX()
                         , game.getMyTeam().getPlayer(i).getPosition().getY());
-                for (int j = 0; j < 24; j++) {
-                    Cor Gate_Cor = new Cor(-7, -1.15 + (j * 0.1));
+                for (int j = 0; j < 47; j++) {
+                    Cor Gate_Cor = new Cor(-7, -1.15 + (j * 0.05));
                     Option option = new Option(find_angle(Player_Cor, Gate_Cor),i);
                     option.score = get_Score(Player_Cor,Ball_Cor,Gate_Cor,i,game);
                     option.angle = find_angle(Player_Cor,Gate_Cor);
@@ -461,8 +460,8 @@ class Strategy {
             Cor Ball_Cor = new Cor(game.getBall().getPosition().getX(), game.getBall().getPosition().getY());
             for (int oo = 0; oo < 5; oo++) {
                 Cor Player_Cor = new Cor(game.getMyTeam().getPlayer(oo).getPosition().getX(), game.getMyTeam().getPlayer(oo).getPosition().getY());
-                for (int j = 0; j < 24; j++) {
-                    Cor Gate_Cor = new Cor(-7, -1.15 + (j * 0.1));
+                for (int j = 0; j < 47; j++) {
+                    Cor Gate_Cor = new Cor(-7, -1.15 + (j * 0.05));
                     //direct shoot
                     int angle = find_angle(Player_Cor, Gate_Cor);
                     Option option = new Option(angle, oo);
@@ -472,8 +471,8 @@ class Strategy {
             }
 
             Option option = optionPriorityQueue.poll();
-            System.out.println("id:"+option.player_id+",angle:"+option.angle+",diff:"+option.angle_diff+",score:"+option.score);
-            if (option.score == -99) {
+            //System.out.println("id:"+option.player_id+",angle:"+option.angle+",diff:"+option.angle_diff+",score:"+option.score);
+            if (option.score <= -99) {
                 if (option.angle != 120) {
                     act.setAngle(120);
                 } else {
@@ -511,41 +510,3 @@ class Strategy {
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=The end
-
-/*
-  getScore Function:
-
-
- if (i == 0){
- // shoot directly
- // process: 1.find annoys , 2.calculate the difference between player_ball angle and ball_gate angle
- // process: 3.calculate distance from player to ball and ball to gate
- int annoys = find_annoy(Player_Cor,Ball_Core,true);
- annoys += find_annoy(Ball_Core,Gate_Core,true);
- Cor Ball_tok = find_tok(Ball_Core,Gate_Core,true);
- int player_ball_angle = find_angle(Player_Cor, Ball_tok);
- int ball_gate_angle = find_angle(Ball_tok, Gate_Core);
- int difference_angle = Math.abs(player_ball_angle - ball_gate_angle);
- double player_ball_distance = Distance(Player_Cor.x,Player_Cor.y, Ball_Core.x, Ball_Core.y);
- score = (int) Math.floor(player_ball_distance*(-0.3) + annoys*(-3) + difference_angle*(-0.1));
-
- }else if (i == 1){
- // player shoots himself to wall
- // process: 1.find annoys , 2.calculate the difference between player_ball angle and ball_gate angle
- // process: 3.calculate distance from player to ball and ball to gate
-
- Cor player_shadow = find_Shadow_for_Player(Player_Cor,find_tok(Ball_Core,Gate_Core,true));
- int player_shadow_angle = find_angle(Player_Cor,player_shadow);
- int annoys = find_annoy(Player_Cor,player_shadow,true);
- annoys += find_annoy(player_shadow,,true);
- int player_ball_angle = find_angle(Player_Cor, Ball_Core);
-
- double player_ball_distance = Distance(Player_Cor.x,Player_Cor.y, player_shadow.x, player_shadow.y);
- player_ball_distance += Distance(player_shadow.x, player_shadow.y, Gate_Core.x, Gate_Core.y);
- score = (int) Math.floor(player_ball_distance*(-0.3) + annoys*(-3) + difference_angle*(-0.1));
-
- }else{
-
- }
-
- */
